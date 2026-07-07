@@ -309,6 +309,18 @@ body {
 }
 .card-size::after { background-color: #92d1c9; }
 
+.card-addition {
+  background-color: #e8dbfc; /* pastel lavender */
+  color: #5c4785;
+}
+.card-addition::after { background-color: #ccb9f7; }
+
+.card-detective {
+  background-color: #fce5cd; /* pastel orange/cream */
+  color: #8a5823;
+}
+.card-detective::after { background-color: #ebd1b5; }
+
 .menu-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 15px 20px rgba(0,0,0,0.08);
@@ -754,8 +766,8 @@ body {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
-  width: 100%;
-  max-width: 440px;
+  width: 440px;
+  max-width: 100%;
   margin: 10px auto;
   perspective: 1000px;
 }
@@ -790,14 +802,14 @@ body {
 .memory-card-front {
   background-color: var(--pastel-orange);
   color: #9c6c4c;
-  font-size: 2.2rem;
+  font-size: 3rem;
   font-weight: bold;
 }
 
 .memory-card-back {
   background-color: #ffffff;
   transform: rotateY(180deg);
-  font-size: 2.5rem;
+  font-size: 3.2rem;
 }
 
 .memory-card.matched {
@@ -982,7 +994,8 @@ body {
   .memory-grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
-    max-width: 290px;
+    width: 290px;
+    max-width: 100%;
     margin: 8px auto;
   }
 
@@ -996,11 +1009,11 @@ body {
   }
 
   .memory-card-front {
-    font-size: 1.4rem;
+    font-size: 2.1rem;
   }
 
   .memory-card-back {
-    font-size: 1.6rem;
+    font-size: 2.2rem;
   }
   
   .mascot-character {

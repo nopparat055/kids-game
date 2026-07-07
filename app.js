@@ -140,6 +140,21 @@ const animalFoodData = [
   { animal: 'กระรอก', emojiAnimal: '🐿️', food: 'ลูกนัท', emojiFood: '🥜', audioAnimal: 'กระรอก', audioFood: 'ลูกนัท' }
 ];
 
+const animalSoundsData = [
+  { key: 'dog', animal: 'สุนัข', emoji: '🐶', sound: 'โฮ่ง โฮ่ง', speak: 'โฮ่ง โฮ่ง' },
+  { key: 'cat', animal: 'แมว', emoji: '🐱', sound: 'เหมียว เหมียว', speak: 'เหมียว เหมียว' },
+  { key: 'cow', animal: 'วัว', emoji: '🐄', sound: 'มอ มอ', speak: 'มอ มอ' },
+  { key: 'duck', animal: 'เป็ด', emoji: '🦆', sound: 'ก้าบ ก้าบ', speak: 'ก้าบ ก้าบ' },
+  { key: 'frog', animal: 'กบ', emoji: '🐸', sound: 'อ๊บ อ๊บ', speak: 'อ๊บ อ๊บ' },
+  { key: 'monkey', animal: 'ลิง', emoji: '🐒', sound: 'เจี๊ยก เจี๊ยก', speak: 'เจี๊ยก เจี๊ยก' },
+  { key: 'sheep', animal: 'แกะ', emoji: '🐑', sound: 'แบะ แบะ', speak: 'แบะ แบะ' },
+  { key: 'elephant', animal: 'ช้าง', emoji: '🐘', sound: 'แป๋น แป๋น', speak: 'แป๋น แป๋น' },
+  { key: 'chicken', animal: 'ไก่', emoji: '🐔', sound: 'เจี๊ยบ เจี๊ยบ', speak: 'เจี๊ยบ เจี๊ยบ' },
+  { key: 'pig', animal: 'หมู', emoji: '🐷', sound: 'อู๊ด อู๊ด', speak: 'อู๊ด อู๊ด' },
+  { key: 'mouse', animal: 'หนู', emoji: '🐭', sound: 'จี๊ด จี๊ด', speak: 'จี๊ด จี๊ด' },
+  { key: 'bird', animal: 'นก', emoji: '🐦', sound: 'จิ๊บ จิ๊บ', speak: 'จิ๊บ จิ๊บ' }
+];
+
 const sizeAnimals = [
   { name: 'มด', emoji: '🐜', size: 1, audio: 'มด' },
   { name: 'หนู', emoji: '🐭', size: 2, audio: 'หนู' },
@@ -201,7 +216,7 @@ let firstCard = null;
 let secondCard = null;
 let canFlipMemoryCard = true;
 let memoryMatchedPairs = 0;
-const totalMemoryPairs = 6;
+const totalMemoryPairs = 8;
 
 // UI Elements
 const screens = {
@@ -263,8 +278,7 @@ function speakText(text, lang = 'th-TH') {
   utterance.lang = lang;
   
   const isFemale = selectedVoiceGender === 'female';
-  utterance.rate = isFemale ? 0.95 : 0.90; // Slightly slower for male voice
-  utterance.pitch = isFemale ? 1.65 : 1.05; // 1.65 for little girl, 1.05 for normal male voice
+  utterance.rate = isFemale ? 0.95 : 0.93; // Cute natural rates
 
   const voices = window.speechSynthesis.getVoices();
   const langMatch = lang.split('-')[0].toLowerCase();
@@ -320,9 +334,32 @@ function speakText(text, lang = 'th-TH') {
     }
   }
 
+  // Assign voice
   if (matchedVoice) {
     utterance.voice = matchedVoice;
-    console.log("Selected voice (" + selectedVoiceGender + "):", matchedVoice.name);
+  }
+
+  // Dynamic Pitch Adjustments:
+  // - If the selected voice is actually a male voice (e.g. Hemant):
+  //   We pitch-shift it high (1.55) to transform the adult male voice to sound like a little boy.
+  // - If the selected voice is a female voice (due to fallback or select):
+  //   - Girl: Pitch 1.65 (cute high girl pitch)
+  //   - Boy: Pitch 1.25 (slightly lower than girl, which makes a female voice sound like a young boy)
+  let actualVoiceIsMale = false;
+  if (matchedVoice) {
+    const matchedName = matchedVoice.name.toLowerCase();
+    actualVoiceIsMale = maleKeywords.some(kw => matchedName.includes(kw));
+  }
+  
+  if (isFemale) {
+    utterance.pitch = actualVoiceIsMale ? 1.85 : 1.65;
+  } else {
+    // Little boy settings
+    utterance.pitch = actualVoiceIsMale ? 1.55 : 1.25;
+  }
+
+  if (matchedVoice) {
+    console.log("Selected voice (" + selectedVoiceGender + ", actual male? " + actualVoiceIsMale + "):", matchedVoice.name, "pitch:", utterance.pitch);
   } else {
     console.log("Using browser default voice for:", lang);
   }
@@ -395,6 +432,231 @@ function playSoundEffect(type) {
   }
 }
 
+// Play synthesized animal sounds via Web Audio API (Offline safe!)
+function playSynthesizedSound(key) {
+  if (isSoundMuted) return;
+  initAudioContext();
+  const now = audioCtx.currentTime;
+
+  switch (key) {
+    case 'dog':
+      for (let i = 0; i < 2; i++) {
+        const d = i * 0.22;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(150, now + d);
+        osc.frequency.exponentialRampToValueAtTime(50, now + d + 0.12);
+        gain.gain.setValueAtTime(0, now + d);
+        gain.gain.linearRampToValueAtTime(0.3, now + d + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + d + 0.12);
+        osc.start(now + d);
+        osc.stop(now + d + 0.15);
+      }
+      break;
+    case 'cat':
+      const catOsc = audioCtx.createOscillator();
+      const catGain = audioCtx.createGain();
+      catOsc.connect(catGain);
+      catGain.connect(audioCtx.destination);
+      catOsc.type = 'triangle';
+      catOsc.frequency.setValueAtTime(450, now);
+      catOsc.frequency.quadraticRampToValueAtTime(580, now + 0.12);
+      catOsc.frequency.exponentialRampToValueAtTime(320, now + 0.45);
+      catGain.gain.setValueAtTime(0, now);
+      catGain.gain.linearRampToValueAtTime(0.25, now + 0.08);
+      catGain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+      catOsc.start(now);
+      catOsc.stop(now + 0.5);
+      break;
+    case 'cow':
+      const cowOsc = audioCtx.createOscillator();
+      const cowGain = audioCtx.createGain();
+      const cowFilter = audioCtx.createBiquadFilter();
+      cowFilter.type = 'lowpass';
+      cowFilter.frequency.setValueAtTime(140, now);
+      cowOsc.connect(cowFilter);
+      cowFilter.connect(cowGain);
+      cowGain.connect(audioCtx.destination);
+      cowOsc.type = 'sawtooth';
+      cowOsc.frequency.setValueAtTime(75, now);
+      cowOsc.frequency.linearRampToValueAtTime(70, now + 0.8);
+      cowGain.gain.setValueAtTime(0, now);
+      cowGain.gain.linearRampToValueAtTime(0.25, now + 0.12);
+      cowGain.gain.linearRampToValueAtTime(0.18, now + 0.6);
+      cowGain.gain.exponentialRampToValueAtTime(0.01, now + 0.85);
+      cowOsc.start(now);
+      cowOsc.stop(now + 0.9);
+      break;
+    case 'duck':
+      for (let i = 0; i < 2; i++) {
+        const d = i * 0.28;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(550, now + d);
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(240, now + d);
+        gain.gain.setValueAtTime(0, now + d);
+        gain.gain.linearRampToValueAtTime(0.2, now + d + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + d + 0.18);
+        osc.start(now + d);
+        osc.stop(now + d + 0.2);
+      }
+      break;
+    case 'frog':
+      for (let i = 0; i < 3; i++) {
+        const d = i * 0.1;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(65, now + d);
+        gain.gain.setValueAtTime(0, now + d);
+        gain.gain.linearRampToValueAtTime(0.18, now + d + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + d + 0.08);
+        osc.start(now + d);
+        osc.stop(now + d + 0.1);
+      }
+      break;
+    case 'elephant':
+      const elOsc = audioCtx.createOscillator();
+      const elGain = audioCtx.createGain();
+      const elFilter = audioCtx.createBiquadFilter();
+      elFilter.type = 'highpass';
+      elFilter.frequency.setValueAtTime(700, now);
+      elOsc.connect(elFilter);
+      elFilter.connect(elGain);
+      elGain.connect(audioCtx.destination);
+      elOsc.type = 'sawtooth';
+      elOsc.frequency.setValueAtTime(400, now);
+      elOsc.frequency.linearRampToValueAtTime(520, now + 0.08);
+      elOsc.frequency.linearRampToValueAtTime(380, now + 0.3);
+      elGain.gain.setValueAtTime(0, now);
+      elGain.gain.linearRampToValueAtTime(0.18, now + 0.04);
+      elGain.gain.linearRampToValueAtTime(0.12, now + 0.15);
+      elGain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+      elOsc.start(now);
+      elOsc.stop(now + 0.4);
+      break;
+    case 'sheep':
+      const shOsc = audioCtx.createOscillator();
+      const shGain = audioCtx.createGain();
+      shOsc.connect(shGain);
+      shGain.connect(audioCtx.destination);
+      shOsc.type = 'sawtooth';
+      shOsc.frequency.setValueAtTime(220, now);
+      shOsc.frequency.linearRampToValueAtTime(200, now + 0.5);
+      shGain.gain.setValueAtTime(0, now);
+      shGain.gain.linearRampToValueAtTime(0.2, now + 0.08);
+      for (let j = 1; j < 6; j++) {
+        const step = j * 0.08;
+        shGain.gain.linearRampToValueAtTime(j % 2 === 0 ? 0.2 : 0.08, now + 0.08 + step);
+      }
+      shGain.gain.exponentialRampToValueAtTime(0.01, now + 0.55);
+      shOsc.start(now);
+      shOsc.stop(now + 0.55);
+      break;
+    case 'chicken':
+      for (let i = 0; i < 3; i++) {
+        const d = i * 0.15;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, now + d);
+        osc.frequency.exponentialRampToValueAtTime(1400, now + d + 0.05);
+        osc.frequency.exponentialRampToValueAtTime(700, now + d + 0.1);
+        gain.gain.setValueAtTime(0, now + d);
+        gain.gain.linearRampToValueAtTime(0.2, now + d + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + d + 0.1);
+        osc.start(now + d);
+        osc.stop(now + d + 0.12);
+      }
+      break;
+    case 'pig':
+      for (let i = 0; i < 2; i++) {
+        const d = i * 0.25;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(100, now + d);
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(80, now + d);
+        osc.frequency.linearRampToValueAtTime(50, now + d + 0.15);
+        gain.gain.setValueAtTime(0, now + d);
+        gain.gain.linearRampToValueAtTime(0.2, now + d + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + d + 0.15);
+        osc.start(now + d);
+        osc.stop(now + d + 0.18);
+      }
+      break;
+    case 'mouse':
+      for (let i = 0; i < 3; i++) {
+        const d = i * 0.12;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(3500, now + d);
+        osc.frequency.linearRampToValueAtTime(4000, now + d + 0.05);
+        gain.gain.setValueAtTime(0, now + d);
+        gain.gain.linearRampToValueAtTime(0.15, now + d + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + d + 0.06);
+        osc.start(now + d);
+        osc.stop(now + d + 0.08);
+      }
+      break;
+    case 'bird':
+      for (let i = 0; i < 3; i++) {
+        const d = i * 0.15;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1800, now + d);
+        osc.frequency.exponentialRampToValueAtTime(2600, now + d + 0.08);
+        gain.gain.setValueAtTime(0, now + d);
+        gain.gain.linearRampToValueAtTime(0.2, now + d + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + d + 0.09);
+        osc.start(now + d);
+        osc.stop(now + d + 0.1);
+      }
+      break;
+    case 'monkey':
+      for (let i = 0; i < 4; i++) {
+        const d = i * 0.18;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, now + d);
+        osc.frequency.exponentialRampToValueAtTime(1500, now + d + 0.06);
+        gain.gain.setValueAtTime(0, now + d);
+        gain.gain.linearRampToValueAtTime(0.22, now + d + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + d + 0.1);
+        osc.start(now + d);
+        osc.stop(now + d + 0.12);
+      }
+      break;
+  }
+}
+
 // Confetti Class and Functions
 function resizeCanvas() {
   canvas.width = canvas.parentElement.clientWidth;
@@ -455,7 +717,7 @@ function animateConfetti() {
 
 // Function to load and update high scores on the main menu cards
 function updateMainMenuHighScores() {
-  const modes = ['numbers', 'thai', 'english', 'shapes', 'colors', 'memory', 'food', 'size'];
+  const modes = ['numbers', 'thai', 'english', 'shapes', 'colors', 'memory', 'food', 'size', 'addition', 'detective'];
   modes.forEach(mode => {
     const key = `highscore_${mode}`;
     const high = localStorage.getItem(key) || 0;
@@ -745,6 +1007,90 @@ function generateSizeQuestions() {
   return questions;
 }
 
+// 8. Simple Addition Game Generator
+function generateAdditionQuestions() {
+  const questions = [];
+  for (let i = 0; i < totalQuestions; i++) {
+    // a and b between 1 and 3, sum <= 5 (for young kids)
+    const a = Math.floor(Math.random() * 3) + 1; // 1 to 3
+    const b = Math.floor(Math.random() * 2) + 1; // 1 to 2
+    const sum = a + b;
+    
+    // Choose a random fruit emoji
+    const fruitEmojis = ['🍎', '🍌', '🍊', '🍓', '🍒', '🍇', '🍉', '🍍', '🍋', '🍑'];
+    const emoji = fruitEmojis[Math.floor(Math.random() * fruitEmojis.length)];
+    
+    const displayString = `${emoji.repeat(a)}  +  ${emoji.repeat(b)}`;
+    
+    // Generate choice values: sum, and other numbers between 1 and 6
+    const correctVal = sum;
+    const allChoices = [correctVal];
+    while (allChoices.length < 4) {
+      const choice = Math.floor(Math.random() * 5) + 1; // 1 to 5
+      if (!allChoices.includes(choice)) {
+        allChoices.push(choice);
+      }
+    }
+    
+    // Shuffle choices
+    const choices = shuffleArray(allChoices).map(num => ({ val: num }));
+    
+    questions.push({
+      prompt: `บวกเลขกันเถอะ! เท่าไหร่นะ? ➕`,
+      speakPrompt: `${a} บวก ${b} ได้เท่าไหร่นะจ๊ะ`,
+      type: 'addition',
+      additionDetails: { a, b, emoji },
+      display: displayString,
+      choices: choices,
+      correctAnswer: { val: correctVal },
+      displayKey: 'val',
+      displayKeySub: '',
+      speechCorrect: `เก่งมาก! คำตอบคือ ${sum} จ้า`,
+      speakLang: 'th-TH'
+    });
+  }
+  return questions;
+}
+
+// 9. Sharp Eye/Detective Game Generator (Odd one out / find identical)
+function generateDetectiveQuestions() {
+  const questions = [];
+  const categories = [emojis.fruits, emojis.animals, emojis.items];
+  
+  for (let i = 0; i < totalQuestions; i++) {
+    // Pick a random category
+    const cat = categories[Math.floor(Math.random() * categories.length)];
+    // Pick a target emoji
+    const target = cat[Math.floor(Math.random() * cat.length)];
+    
+    // Pick 3 distractors from the same category
+    const distractors = [];
+    while (distractors.length < 3) {
+      const rand = cat[Math.floor(Math.random() * cat.length)];
+      if (rand !== target && !distractors.includes(rand)) {
+        distractors.push(rand);
+      }
+    }
+    
+    // Choices: target + 3 distractors
+    const choices = shuffleArray([target, ...distractors]).map(emoji => ({ val: emoji }));
+    
+    questions.push({
+      prompt: `จับคู่รูปภาพ! รูปไหนเหมือนรูปด้านบนนะจ๊ะ? 🔍`,
+      speakPrompt: `หาภาพที่เหมือนกับภาพด้านบนนะจ๊ะ`,
+      type: 'detective',
+      display: target,
+      choices: choices,
+      correctAnswer: { val: target },
+      displayKey: 'val',
+      displayKeySub: '',
+      speechCorrect: `เก่งมาก! รูปที่เหมือนกันคือรูปนี้เลยจ้า`,
+      speakLang: 'th-TH'
+    });
+  }
+  return questions;
+}
+
 // Start a game mode
 function startGame(mode) {
   initAudioContext();
@@ -767,6 +1113,10 @@ function startGame(mode) {
     gameQuestions = generateFoodQuestions();
   } else if (mode === 'size') {
     gameQuestions = generateSizeQuestions();
+  } else if (mode === 'addition') {
+    gameQuestions = generateAdditionQuestions();
+  } else if (mode === 'detective') {
+    gameQuestions = generateDetectiveQuestions();
   } else if (mode === 'memory') {
     gameQuestions = [];
     memoryMatchedPairs = 0;
@@ -799,9 +1149,9 @@ function loadQuestion() {
     questionPrompt.textContent = 'จับคู่การ์ดสัตว์ที่เหมือนกันให้พบนะจ๊ะ! 🐻';
     questionDisplay.innerHTML = '';
     
-    // Pick 6 random animal/fruit/item emojis
+    // Pick random animal/fruit/item emojis based on totalMemoryPairs
     const allPossibilities = [...emojis.animals, ...emojis.fruits, '🐔', '🦁', '🐸', '🐼', '🦊', '🦉'];
-    const selected = shuffleArray(allPossibilities).slice(0, 6);
+    const selected = shuffleArray(allPossibilities).slice(0, totalMemoryPairs);
     const cardsList = shuffleArray([...selected, ...selected]);
     
     const grid = document.createElement('div');
@@ -895,6 +1245,50 @@ function loadQuestion() {
     sizeBox.appendChild(leftAnimal);
     sizeBox.appendChild(rightAnimal);
     questionDisplay.appendChild(sizeBox);
+  } else if (q.type === 'addition') {
+    // Draw addition equation with styled emoji blocks
+    const additionBox = document.createElement('div');
+    additionBox.style.display = 'flex';
+    additionBox.style.alignItems = 'center';
+    additionBox.style.justifyContent = 'center';
+    additionBox.style.gap = '15px';
+    additionBox.style.fontSize = '3.5rem';
+
+    // First group
+    const group1 = document.createElement('div');
+    group1.style.display = 'flex';
+    group1.style.gap = '5px';
+    for (let i = 0; i < q.additionDetails.a; i++) {
+      const emojiSpan = document.createElement('span');
+      emojiSpan.className = 'question-item-emoji';
+      emojiSpan.textContent = q.additionDetails.emoji;
+      emojiSpan.style.animationDelay = `${i * 0.05}s`;
+      group1.appendChild(emojiSpan);
+    }
+
+    // Plus sign
+    const plusSpan = document.createElement('span');
+    plusSpan.textContent = '➕';
+    plusSpan.style.color = '#ff6b6b';
+    plusSpan.style.margin = '0 10px';
+    plusSpan.style.fontSize = '2.5rem';
+
+    // Second group
+    const group2 = document.createElement('div');
+    group2.style.display = 'flex';
+    group2.style.gap = '5px';
+    for (let i = 0; i < q.additionDetails.b; i++) {
+      const emojiSpan = document.createElement('span');
+      emojiSpan.className = 'question-item-emoji';
+      emojiSpan.textContent = q.additionDetails.emoji;
+      emojiSpan.style.animationDelay = `${(q.additionDetails.a + i) * 0.05}s`;
+      group2.appendChild(emojiSpan);
+    }
+
+    additionBox.appendChild(group1);
+    additionBox.appendChild(plusSpan);
+    additionBox.appendChild(group2);
+    questionDisplay.appendChild(additionBox);
   } else {
     // Text or Emoji display
     const contentDiv = document.createElement('div');
@@ -903,7 +1297,7 @@ function loadQuestion() {
     contentDiv.style.alignItems = 'center';
     
     const displaySpan = document.createElement('span');
-    displaySpan.className = q.display.length > 2 ? 'question-item-emoji' : '';
+    displaySpan.className = (q.type === 'detective' || q.display.length > 2) ? 'question-item-emoji' : '';
     displaySpan.textContent = q.display;
     contentDiv.appendChild(displaySpan);
 
@@ -961,6 +1355,10 @@ function loadQuestion() {
         btn.dataset.answer = choice.nameTh;
       } else if (currentGameMode === 'food') {
         btn.dataset.answer = choice.emojiFood;
+      } else if (currentGameMode === 'addition') {
+        btn.dataset.answer = choice.val;
+      } else if (currentGameMode === 'detective') {
+        btn.dataset.answer = choice.val;
       } else {
         btn.dataset.answer = choice[currentGameMode === 'thai' || currentGameMode === 'english' ? 'letter' : 'nameTh'];
       }
@@ -1078,6 +1476,12 @@ function handleOptionSelect(e) {
   } else if (currentGameMode === 'size') {
     isCorrect = selectedAnswer === q.correctAnswer.name;
     correctVal = q.correctAnswer.name;
+  } else if (currentGameMode === 'addition') {
+    isCorrect = parseInt(selectedAnswer) === q.correctAnswer.val;
+    correctVal = q.correctAnswer.val.toString();
+  } else if (currentGameMode === 'detective') {
+    isCorrect = selectedAnswer === q.correctAnswer.val;
+    correctVal = q.correctAnswer.val;
   }
 
   const parentBox = document.querySelector('.question-box');
@@ -1210,7 +1614,7 @@ if (btnVoiceFemale && btnVoiceMale) {
     btnVoiceMale.classList.add('active');
     btnVoiceFemale.classList.remove('active');
     selectedVoiceGender = 'male';
-    speakText('เสียงผู้ชายครับ', 'th-TH');
+    speakText('เสียงเด็กผู้ชายครับ', 'th-TH');
   });
 }
 
