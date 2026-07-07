@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เกมนักสำรวจน้อย 🐻🎈 - เรียนรู้ตัวเลข ภาษาไทย ภาษาอังกฤษ และรูปทรง</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="app-container">
+    <!-- Confetti canvas for celebrations -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Top Navigation (Sound Toggle & Home Button) -->
+    <div class="top-nav">
+      <button id="btn-home" class="btn-round btn-back hidden" title="กลับหน้าหลัก">🏠</button>
+      <div></div>
+      <button id="btn-sound" class="btn-round btn-sound" title="เปิด/ปิดเสียง">🔊</button>
+    </div>
+
+    <!-- Screen 1: Welcome/Start -->
+    <div id="screen-welcome" class="screen">
+      <div class="welcome-logo">🐻🎈🎒</div>
+      <h1 class="welcome-title">
+        เกมนักสำรวจน้อย
+        <span>ตัวเลข, ภาษาไทย, ภาษาอังกฤษ, รูปทรง, สีสัน, และความจำ</span>
+      </h1>
+      
+      <!-- Voice gender selector -->
+      <div class="voice-selector" style="margin-bottom: 25px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+        <span style="font-size: 1.1rem; font-weight: bold; color: #666;">เลือกเสียงนำทาง:</span>
+        <div style="display: flex; gap: 12px;">
+          <button id="btn-voice-female" class="btn-voice-opt active" data-voice="female" style="padding: 10px 18px; font-size: 1.05rem; font-weight: bold; border-radius: 20px; cursor: pointer; transition: all 0.1s ease; border: 3px solid #fff; box-shadow: 0 4px 0 rgba(0,0,0,0.05); font-family: var(--font-family);">👧 เสียงเด็กผู้หญิง</button>
+          <button id="btn-voice-male" class="btn-voice-opt" data-voice="male" style="padding: 10px 18px; font-size: 1.05rem; font-weight: bold; border-radius: 20px; cursor: pointer; transition: all 0.1s ease; border: 3px solid #fff; box-shadow: 0 4px 0 rgba(0,0,0,0.05); font-family: var(--font-family);">👦 เสียงผู้ชาย</button>
+        </div>
+      </div>
+
+      <button id="btn-start-game" class="btn-play-big">
+        <span>มาเล่นกันเลย!</span> 🦖
+      </button>
+    </div>
+
+    <!-- Screen 2: Main Menu / Dashboard -->
+    <div id="screen-menu" class="screen hidden">
+      <h2 class="welcome-title" style="margin-bottom: 20px;">เลือกเกมแสนสนุกกันนะ!</h2>
+      <div class="menu-grid">
+        <!-- Numbers Game Card -->
+        <div class="menu-card card-numbers" data-game-mode="numbers">
+          <div class="menu-card-icon">🍎</div>
+          <div class="menu-card-title">ดินแดนตัวเลข</div>
+          <div class="menu-card-desc">ฝึกนับเลข 1-10 กันนะ</div>
+          <div class="menu-card-score" id="high-score-numbers">คะแนนสูงสุด: 0/20</div>
+        </div>
+        <!-- Thai Alphabet Card -->
+        <div class="menu-card card-thai" data-game-mode="thai">
+          <div class="menu-card-icon">🐔</div>
+          <div class="menu-card-title">ผจญภัยภาษาไทย</div>
+          <div class="menu-card-desc">เรียนรู้ ก-ฮ แสนง่าย</div>
+          <div class="menu-card-score" id="high-score-thai">คะแนนสูงสุด: 0/20</div>
+        </div>
+        <!-- English Alphabet Card -->
+        <div class="menu-card card-english" data-game-mode="english">
+          <div class="menu-card-icon">🦁</div>
+          <div class="menu-card-title">ซาฟารีอังกฤษ</div>
+          <div class="menu-card-desc">สนุกกับ A-Z และคำศัพท์</div>
+          <div class="menu-card-score" id="high-score-english">คะแนนสูงสุด: 0/20</div>
+        </div>
+        <!-- Shapes Card -->
+        <div class="menu-card card-shapes" data-game-mode="shapes">
+          <div class="menu-card-icon">⭐</div>
+          <div class="menu-card-title">ดินแดนรูปทรง</div>
+          <div class="menu-card-desc">รู้จักวงกลม สามเหลี่ยม ดาว</div>
+          <div class="menu-card-score" id="high-score-shapes">คะแนนสูงสุด: 0/20</div>
+        </div>
+        <!-- Colors Card -->
+        <div class="menu-card card-colors" data-game-mode="colors">
+          <div class="menu-card-icon">🎨</div>
+          <div class="menu-card-title">ดินแดนสีสัน</div>
+          <div class="menu-card-desc">ฝึกจำสีต่างๆ แสนสวย</div>
+          <div class="menu-card-score" id="high-score-colors">คะแนนสูงสุด: 0/20</div>
+        </div>
+        <!-- Memory Card -->
+        <div class="menu-card card-memory" data-game-mode="memory">
+          <div class="menu-card-icon">🃏</div>
+          <div class="menu-card-title">จับคู่ความจำ</div>
+          <div class="menu-card-desc">พลิกการ์ดภาพสัตว์แสนรัก</div>
+          <div class="menu-card-score" id="high-score-memory">คะแนนสูงสุด: 0/6</div>
+        </div>
+        <!-- Animal Food Card -->
+        <div class="menu-card card-food" data-game-mode="food">
+          <div class="menu-card-icon">🥕</div>
+          <div class="menu-card-title">สัตว์กินอะไรนะ?</div>
+          <div class="menu-card-desc">คู่มื้ออร่อยของสัตว์ต่างๆ</div>
+          <div class="menu-card-score" id="high-score-food">คะแนนสูงสุด: 0/20</div>
+        </div>
+        <!-- Size Card -->
+        <div class="menu-card card-size" data-game-mode="size">
+          <div class="menu-card-icon">🐘</div>
+          <div class="menu-card-title">พี่ใหญ่กับน้องเล็ก</div>
+          <div class="menu-card-desc">เปรียบเทียบขนาดตัวสัตว์</div>
+          <div class="menu-card-score" id="high-score-size">คะแนนสูงสุด: 0/20</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: Gameplay Screen -->
+    <div id="screen-game" class="screen hidden">
+      <div class="game-header">
+        <div class="score-badge">
+          <span>⭐</span> <span id="game-score">0</span>
+        </div>
+        <div class="progress-container">
+          <div id="game-progress" class="progress-bar"></div>
+        </div>
+        <div class="score-badge" style="border-color: var(--pastel-pink)">
+          <span>ข้อ</span> <span id="game-level">1/10</span>
+        </div>
+      </div>
+
+      <div class="question-box">
+        <button id="btn-repeat-voice" class="btn-repeat-voice" title="ฟังอีกครั้ง">🔊</button>
+        <div id="question-prompt" class="question-prompt">นับซิ มีลูกแอปเปิ้ลอยู่กี่ลูกนะ?</div>
+        <div id="question-display" class="question-display">
+          <!-- Emojis, Letters, or Shapes will be inserted here dynamically -->
+        </div>
+      </div>
+
+      <div class="options-grid">
+        <button class="option-btn" id="opt-0">
+          <span class="option-btn-text">ตัวเลือก 1</span>
+        </button>
+        <button class="option-btn" id="opt-1">
+          <span class="option-btn-text">ตัวเลือก 2</span>
+        </button>
+        <button class="option-btn" id="opt-2">
+          <span class="option-btn-text">ตัวเลือก 3</span>
+        </button>
+        <button class="option-btn" id="opt-3">
+          <span class="option-btn-text">ตัวเลือก 4</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Screen 4: Score Board / End -->
+    <div id="screen-score" class="screen hidden">
+      <div class="score-logo">🏆</div>
+      <h2 class="score-title">ยอดเยี่ยมที่สุดเลย!</h2>
+      <p class="score-text">หนูเก่งมากๆ ได้คะแนน <span id="final-score" class="score-number">10</span> เต็ม <span id="max-score" class="score-number">20</span> คะแนน!</p>
+      
+      <div class="score-buttons">
+        <button id="btn-restart" class="btn-restart">🔄 เล่นอีกครั้ง</button>
+        <button id="btn-go-home" class="btn-home">🏠 กลับหน้าหลัก</button>
+      </div>
+    </div>
+
+    <!-- Mascot Guide (Always visible at the bottom) -->
+    <div id="mascot-container">
+      <div id="mascot-character" class="mascot-character" title="กดพี่หมีเพื่อคุยกัน!">🐻</div>
+      <div id="mascot-bubble" class="speech-bubble">สวัสดีจ้าหนูๆ! มาผจญภัยเรียนรู้สิ่งใหม่ๆ กันเถอะ! กดปุ่มเริ่มเล่นด้านบนได้เลยนะ</div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
